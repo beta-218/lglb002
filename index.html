@@ -16,7 +16,7 @@
     justify-content: flex-start;
     align-items: center;
     min-height: 100vh;
-    padding: 80px 20px 20px;
+    padding: 80px 20px 20px; /* 恢复原页面顶部距离 */
   }
   .content-wrapper {
     display: flex;
@@ -25,11 +25,13 @@
     width: 100%;
     max-width: 90vw;
   }
+  /* 提示文字：低调缩小，不占视觉中心 */
   h1 {
-    font-size: 16px;
+    font-size: 13px;
+    font-weight: normal;
     margin-bottom: 20px;
     text-align: center;
-    opacity: 0.7;
+    opacity: 0.6;
   }
   .video-container {
     position: relative;
@@ -40,6 +42,13 @@
     height: auto;
     border-radius: 12px;
     background: #000;
+  }
+  /* 播放器下方的卡顿提示 */
+  .buffer-tips {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 8px;
+    text-align: center;
   }
   .loading-overlay {
     position: absolute;
@@ -112,8 +121,9 @@
 </head>
 <body>
 <div class="content-wrapper">
-  <h1>🎬 请勿相信视频中的广告</h1>
+  <h1>🎬 为避免财产损失，请勿相信视频中的广告</h1>
   <div class="video-container">
+    <!-- 严格保持你原本的标签写法，防浏览器劫持，让进度条回归底部 -->
     <video id="video" playsinline webkit-playsinline preload="auto" controls></video>
     <div class="loading-overlay" id="loadingOverlay">
       <div class="loader"></div>
@@ -122,6 +132,7 @@
       </div>
     </div>
   </div>
+  <div class="buffer-tips">如遇卡顿，请尝试暂停缓冲几秒</div>
 </div>
 
 <div class="video-list" id="videoList">
@@ -160,12 +171,9 @@ function loadVideo(url, resumeTime, isM3U8){
     hls = null; 
   }
 
+  // 恢复最快网速加载策略，不设置限制
   if(isM3U8 && typeof Hls !== 'undefined'){
     hls = new Hls({
-      maxBufferLength: 30,
-      maxMaxBufferLength: 60,
-      fragLoadingTimeOut: 20000,
-      manifestLoadingTimeOut: 20000,
       enableWorker: true,
       startFragPrefetch: true
     });
@@ -179,19 +187,15 @@ function loadVideo(url, resumeTime, isM3U8){
     });
 
     hls.on(Hls.Events.ERROR, function(event, data){
-      console.error("Hls.js error:", data);
       if(data.fatal){
         switch(data.type){
           case Hls.ErrorTypes.NETWORK_ERROR:
-            console.warn("网络错误，尝试重新加载...");
             hls.startLoad();
             break;
           case Hls.ErrorTypes.MEDIA_ERROR:
-            console.warn("媒体错误，尝试恢复...");
             hls.recoverMediaError();
             break;
           default:
-            console.warn("无法恢复的错误，销毁 Hls 实例");
             hls.destroy();
             hideLoading();
             break;
